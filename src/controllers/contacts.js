@@ -8,6 +8,7 @@ import {
 import { parseFilterParams } from '../utils/validation/parseFilterParams.js';
 import { validatePaginationParams } from '../utils/validation/parsePaginationParams.js';
 import { parseSortParams } from '../utils/validation/parseSortParams.js';
+import createHttpError from 'http-errors';
 
 export const getContactsController = async (req, res) => {
   const { page, perPage } = validatePaginationParams(req.query);
@@ -40,10 +41,15 @@ export const getContactsByIdController = async (req, res, next) => {
   });
 };
 
-export const deleteContactByIdController = async (req, res) => {
+export const deleteContactByIdController = async (req, res, next) => {
   const id = req.params.contactId;
 
-  await deleteContactById(id);
+  const contact = await deleteContactById(id);
+
+  if (!contact) {
+    next(createHttpError(404, 'Contact not found'));
+    return;
+  }
 
   res.status(204).send();
 };
