@@ -14,6 +14,7 @@ export const getContactsController = async (req, res) => {
   const { page, perPage } = validatePaginationParams(req.query);
   const { sortOrder, sortBy } = parseSortParams(req.query);
   const filter = parseFilterParams(req.query);
+  const userId = req.user._id;
 
   const contacts = await getAllContacts({
     page,
@@ -21,6 +22,7 @@ export const getContactsController = async (req, res) => {
     sortOrder,
     sortBy,
     filter,
+    userId,
   });
 
   res.status(200).json({
@@ -32,7 +34,12 @@ export const getContactsController = async (req, res) => {
 
 export const getContactsByIdController = async (req, res, next) => {
   const id = req.params.contactId;
-  const contact = await getContactsById(id);
+  const userId = req.user._id;
+  const contact = await getContactsById(id, userId);
+
+  if (!contact) {
+    throw createHttpError(404, 'Contact not found');
+  }
 
   res.status(200).json({
     status: 200,
@@ -43,8 +50,9 @@ export const getContactsByIdController = async (req, res, next) => {
 
 export const deleteContactByIdController = async (req, res, next) => {
   const id = req.params.contactId;
+  const userId = req.user._id;
 
-  const contact = await deleteContactById(id);
+  const contact = await deleteContactById(id, userId);
 
   if (!contact) {
     next(createHttpError(404, 'Contact not found'));
@@ -55,7 +63,12 @@ export const deleteContactByIdController = async (req, res, next) => {
 };
 
 export const createContactController = async (req, res) => {
-  const contact = await createContact(req.body);
+  const userId = req.user._id;
+  const contact = await createContact(req.body, userId);
+
+  if (!contact) {
+    throw createHttpError(404, 'Contact not found');
+  }
 
   res.status(201).send({
     status: 201,
@@ -64,11 +77,17 @@ export const createContactController = async (req, res) => {
   });
 };
 
-export const patchContactController = async (req, res) => {
+export const patchContactController = async (req, res, next) => {
   const id = req.params.contactId;
+  const userId = req.user._id;
   const { body } = req;
 
-  const { contact } = await updateContact(id, body);
+  const { contact } = await updateContact(id, body, userId);
+
+  if (!contact) {
+    next(createHttpError(404, 'Contact not found'));
+    return;
+  }
 
   res.status(200).send({
     status: 200,

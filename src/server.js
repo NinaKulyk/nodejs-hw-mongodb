@@ -6,6 +6,8 @@ import { ENV_VARS } from './constants/index.js';
 import { notFoundMiddleware } from './middlewares/notFound.js';
 import { errorHandlerMiddleware } from './middlewares/errorHandler.js';
 import router from './routers/index.js';
+import authRouter from './routers/auth.js';
+import cookieParser from 'cookie-parser';
 
 const PORT = env(ENV_VARS.PORT, 3000);
 
@@ -22,6 +24,8 @@ export const setupServer = () => {
 
   app.use(cors());
 
+  app.use(cookieParser());
+
   app.use(
     express.json({
       type: ['application/json', 'application/vnd.api+json'],
@@ -33,6 +37,8 @@ export const setupServer = () => {
       message: 'Hello world!',
     });
   });
+
+  app.use('/auth', authRouter);
 
   app.use(router);
 
