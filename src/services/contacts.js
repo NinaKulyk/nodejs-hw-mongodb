@@ -55,8 +55,6 @@ export const createContact = async (payload, userId) => {
 };
 
 export const updateContact = async (id, payload, options = {}, userId) => {
-  console.log('Updating contact with ID:', id, 'and userID:', userId);
-
   const rawResult = await contactsModel.findOneAndUpdate(
     { _id: id, userId },
     payload,
