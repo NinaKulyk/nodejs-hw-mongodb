@@ -10,4 +10,4 @@ export const updateContactValidationSchema = Joi.object({
   contactType: Joi.string()
     .valid('work', 'home', 'personal')
     .default('personal'),
-});
+}).min(1);

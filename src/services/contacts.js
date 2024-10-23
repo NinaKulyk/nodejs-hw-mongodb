@@ -37,8 +37,8 @@ export const getAllContacts = async ({
   };
 };
 
-export const getContactsById = async (id) => {
-  const contact = await contactsModel.findById(id);
+export const getContactsById = async (id, userId) => {
+  const contact = await contactsModel.findOne({ _id: id, userId });
 
   if (!contact) {
     throw createHttpError(404, {
@@ -51,15 +51,21 @@ export const getContactsById = async (id) => {
 };
 
 export const createContact = async (payload, userId) => {
-  return await contactsModel.create({ ...payload, userId });
+  return await contactsModel.create(payload);
 };
 
-export const updateContact = async (id, payload, options, userId = {}) => {
-  const rawResult = await contactsModel.findByIdAndUpdate(id, payload, userId, {
-    new: true,
-    includeResultMetadata: true,
-    ...options,
-  });
+export const updateContact = async (id, payload, options = {}, userId) => {
+  console.log('Updating contact with ID:', id, 'and userID:', userId);
+
+  const rawResult = await contactsModel.findOneAndUpdate(
+    { _id: id, userId },
+    payload,
+    {
+      new: true,
+      includeResultMetadata: true,
+      ...options,
+    },
+  );
 
   if (!rawResult.value) {
     throw createHttpError(404, {
@@ -75,5 +81,14 @@ export const updateContact = async (id, payload, options, userId = {}) => {
 };
 
 export const deleteContactById = async (id, userId) => {
-  await contactsModel.findByIdAndDelete(id, userId);
+  const contact = await contactsModel.findOneAndDelete({ _id: id, userId });
+
+  if (!contact) {
+    throw createHttpError(404, {
+      status: 404,
+      message: `Contact with id ${id} not found!`,
+    });
+  }
+
+  return contact;
 };
