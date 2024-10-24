@@ -1,6 +1,7 @@
 import createHttpError from 'http-errors';
 import { contactsModel } from '../db/models/contact.js';
 import { createPagination } from '../utils/createPagination.js';
+import { saveImageToCloudinary } from '../utils/saveImageToCloudinary.js';
 
 export const getAllContacts = async ({
   page = 1,
@@ -43,7 +44,7 @@ export const getContactsById = async (id, userId) => {
   if (!contact) {
     throw createHttpError(404, {
       status: 404,
-      message: `Student with id ${id} not found!`,
+      message: `Contact with id ${id} not found!`,
     });
   }
 
@@ -54,10 +55,21 @@ export const createContact = async (payload, userId) => {
   return await contactsModel.create({ ...payload, userId });
 };
 
-export const updateContact = async (id, payload, options = {}, userId) => {
+export const updateContact = async (
+  id,
+  { file, ...payload },
+  userId,
+  options = {},
+) => {
+  let photoUrl;
+
+  if (file) {
+    photoUrl = await saveImageToCloudinary(file);
+  }
+
   const rawResult = await contactsModel.findOneAndUpdate(
     { _id: id, userId },
-    payload,
+    { ...payload, photoUrl },
     {
       new: true,
       includeResultMetadata: true,
@@ -68,7 +80,7 @@ export const updateContact = async (id, payload, options = {}, userId) => {
   if (!rawResult.value) {
     throw createHttpError(404, {
       status: 404,
-      message: `Student with id ${id} not found!`,
+      message: `Contact with id ${id} not found!`,
     });
   }
 

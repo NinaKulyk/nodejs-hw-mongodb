@@ -7,6 +7,11 @@ import {
   ACCESS_TOKEN_LIVE_TIME,
   REFRESH_TOKEN_LIVE_TIME,
 } from '../constants/time.js';
+import { emailClient } from '../utils/emailClient.js';
+import { env } from '../utils/env.js';
+import { ENV_VARS } from '../constants/index.js';
+import { generateResetPasswordEmail } from '../utils/generateResetPasswordEmail.js';
+import jwt from 'jsonwebtoken';
 
 const createSession = () => ({
   accessToken: crypto.randomBytes(16).toString('base64'),
@@ -91,4 +96,63 @@ export const refreshUser = async (sessionId, sessionToken) => {
   });
 
   return newSession;
+};
+
+export const sendResetPasswordToken = async (email) => {
+  const user = await userModel.findOne({ email });
+
+  if (!user) {
+    throw createHttpError(404, 'User not found');
+  }
+
+  const resetToken = jwt.sign(
+    {
+      sub: user._id,
+      email,
+    },
+    env(ENV_VARS.JWT_SECRET, {
+      expiresIn: 60 * 15,
+    }),
+  );
+
+  const resetLink = `${env(
+    ENV_VARS.APP_DOMAIN,
+  )}/reset-password?token=${resetToken}`;
+
+  try {
+    await emailClient.sendMail({
+      to: email,
+      from: env(ENV_VARS.SMTP_FROM),
+      html: generateResetPasswordEmail({
+        name: user.name,
+        resetLink: resetLink,
+      }),
+      subject: 'Reset your password',
+    });
+  } catch (error) {
+    console.log(error);
+    throw createHttpError(500, 'Error in sending email');
+  }
+};
+
+export const resetPassword = async ({ token, password }) => {
+  let payload;
+
+  try {
+    payload = jwt.verify(token, env(ENV_VARS.JWT_SECRET));
+  } catch (error) {
+    throw createHttpError(401, error.message);
+  }
+
+  const user = await userModel.findById(payload.sub);
+
+  if (!user) {
+    throw createHttpError(404, 'User not found');
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  await userModel.findByIdAndUpdate(user._id, { password: hashedPassword });
+
+  await sessionModel.deleteMany({ userId: user._id });
 };

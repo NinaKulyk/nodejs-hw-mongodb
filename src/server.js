@@ -8,6 +8,7 @@ import { errorHandlerMiddleware } from './middlewares/errorHandler.js';
 import router from './routers/index.js';
 import authRouter from './routers/auth.js';
 import cookieParser from 'cookie-parser';
+import { UPLOAD_PATH } from './constants/path.js';
 
 const PORT = env(ENV_VARS.PORT, 3000);
 
@@ -41,6 +42,8 @@ export const setupServer = () => {
   app.use('/auth', authRouter);
 
   app.use(router);
+
+  app.use('/', express.static(UPLOAD_PATH));
 
   app.use(notFoundMiddleware);
 
