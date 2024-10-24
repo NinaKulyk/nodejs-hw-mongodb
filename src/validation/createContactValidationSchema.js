@@ -5,9 +5,7 @@ export const createContactValidationSchema = Joi.object({
   phoneNumber: Joi.string()
     .pattern(/^\+?[0-9]{7,15}$/)
     .required(),
-  email: Joi.string()
-    .email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } })
-    .optional(),
+  email: Joi.string().email().optional(),
   isFavourite: Joi.boolean().optional(),
   contactType: Joi.string()
     .valid('work', 'home', 'personal')
