@@ -156,3 +156,5 @@ export const resetPassword = async ({ token, password }) => {
 
   await sessionModel.deleteMany({ userId: user._id });
 };
+
+export const getGoogleOauthLink = async () => {};

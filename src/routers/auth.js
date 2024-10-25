@@ -5,6 +5,7 @@ import {
   logoutUserController,
   refreshUserController,
   registerUserController,
+  requestGoogleOauthUrlController,
   requestResetPasswordTokenController,
   resetPasswordController,
 } from '../controllers/auth.js';
@@ -39,5 +40,11 @@ authRouter.post(
   validateBody(resetPasswordValidationSchema),
   ctrlWrapper(resetPasswordController),
 );
+
+authRouter.post(
+  '/request-google-oauth-link',
+  ctrlWrapper(requestGoogleOauthUrlController),
+);
+authRouter.post('/verify-oauth', ctrlWrapper());
 
 export default authRouter;
