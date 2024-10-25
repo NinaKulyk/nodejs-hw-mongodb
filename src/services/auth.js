@@ -1,7 +1,7 @@
 import { userModel } from '../db/models/user.js';
 import createHttpError from 'http-errors';
 import bcrypt from 'bcrypt';
-import crypto from 'node:crypto';
+import crypto, { randomBytes } from 'node:crypto';
 import { sessionModel } from '../db/models/session.js';
 import {
   ACCESS_TOKEN_LIVE_TIME,
@@ -12,6 +12,7 @@ import { env } from '../utils/env.js';
 import { ENV_VARS } from '../constants/index.js';
 import { generateResetPasswordEmail } from '../utils/generateResetPasswordEmail.js';
 import jwt from 'jsonwebtoken';
+import { generateOAuthLink, verifyCode } from '../utils/googleOauth.js';
 
 const createSession = () => ({
   accessToken: crypto.randomBytes(16).toString('base64'),
@@ -117,7 +118,7 @@ export const sendResetPasswordToken = async (email) => {
 
   const resetLink = `${env(
     ENV_VARS.APP_DOMAIN,
-  )}/reset-password?token=${resetToken}`;
+  )}/auth/reset-password?token=${resetToken}`;
 
   try {
     await emailClient.sendMail({
@@ -157,4 +158,31 @@ export const resetPassword = async ({ token, password }) => {
   await sessionModel.deleteMany({ userId: user._id });
 };
 
-export const getGoogleOauthLink = async () => {};
+export const getGoogleOauthLink = () => {
+  return generateOAuthLink();
+};
+
+export const verifyGoogleOauth = async (code) => {
+  const { name, email, picture } = await verifyCode(code);
+
+  let user = await userModel.findOne({ email });
+
+  if (!user) {
+    const password = await bcrypt.hash(randomBytes(40), 10);
+    user = await userModel.create({
+      name,
+      email,
+      avatarUrl: picture,
+      password,
+    });
+  }
+
+  await sessionModel.deleteOne({
+    userId: user._id,
+  });
+
+  return await sessionModel.create({
+    userId: user._id,
+    ...createSession(),
+  });
+};

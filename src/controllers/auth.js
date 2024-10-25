@@ -7,6 +7,7 @@ import {
   registerUser,
   resetPassword,
   sendResetPasswordToken,
+  verifyGoogleOauth,
 } from '../services/auth.js';
 
 const setupSessionCookies = (session, res) => {
@@ -89,12 +90,24 @@ export const resetPasswordController = async (req, res) => {
   });
 };
 
-export const requestGoogleOauthUrlController = async (req, res) => {
-  const link = await getGoogleOauthLink();
+export const requestGoogleOauthUrlController = (req, res) => {
+  const link = getGoogleOauthLink();
 
-  res.status(200).json({
+  res.json({
     status: 200,
-    message: 'Password requested oauth link',
+    message: 'Successfully requested oauth link!',
     data: { link },
+  });
+};
+
+export const verifyGoogleOauthController = async (req, res) => {
+  const session = await verifyGoogleOauth(req.body.code);
+
+  setupSessionCookies(session, res);
+
+  res.json({
+    status: 200,
+    message: 'Successfully logged in via Google OAuth!',
+    data: { accessToken: session.accessToken },
   });
 };
