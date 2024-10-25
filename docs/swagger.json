@@ -537,7 +537,7 @@
             "description": "Link to contact's photo",
             "type": "string",
             "format": "binary",
-            "example": "https://res.cloudinary.com/uqwgdefwefu/image/upload/image.png"
+            "example": "https://res.cloudinary.com/uqwgdu/image/upload/image.png"
           }
         }
       }
