@@ -34,6 +34,7 @@ export const setupServer = () => {
   );
 
   app.use('/upload', express.static(UPLOAD_PATH));
+  app.use('/api-docs', swaggerDocs());
 
   app.get('/', async (req, res) => {
     res.status(200).json({
@@ -42,8 +43,6 @@ export const setupServer = () => {
   });
 
   app.use(router);
-
-  app.use('/api-docs', swaggerDocs());
 
   app.use(notFoundMiddleware);
 
